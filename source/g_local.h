@@ -611,6 +611,21 @@ bind 6 "use Sniper Rifle"
 #define AMMO_FIRST				ITEM_MAX
 #define AMMO_MAX				AMMO_FIRST+AMMO_COUNT
 
+// Game Modes
+#define GM_TEAMPLAY 0
+#define GM_TEAMDM 1
+#define GM_CTF 2
+#define GM_TOURNEY 3
+#define GM_DEATHMATCH 4
+#define GM_DOMINATION 5
+
+// Game Mode Flags
+#define GMF_NONE 0
+#define GMF_3TEAMS 1
+//#define NEW_MODE 2       // If new game mode flags are created, use 2 for its value first
+#define GMF_DARKMATCH 4
+#define GMF_MATCHMODE 8
+
 //AQ2:TNG - Igor adding wp_flags/itm_flags
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
@@ -1111,12 +1126,14 @@ extern cvar_t *medkit_instant;
 
 // BEGIN AQ2 ETE
 extern cvar_t *e_enhancedSlippers;
-
 // END AQ2 ETE
 
 // 2022
 extern cvar_t *sv_limp_highping;
-extern cvar_t *mapvote_next_limit;
+extern cvar_t *mapvote_next_limit; // Time left that disables map voting
+extern cvar_t *gm; // Gamemode
+extern cvar_t *gmf; // Gamemodeflags
+extern cvar_t *sv_idleremove; // Remove idlers
 
 #define world   (&g_edicts[0])
 

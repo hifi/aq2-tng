@@ -6,7 +6,8 @@ Changes in TNG 2.82
 
 From 2.82
 + mapvote_next_limit: Value in seconds, restricts players from voting for a map at the very end of the match while still enabling mapvote_next features
-
++ New server cvar 'scoreboard' allows customizing fields of second scoreboard screen in team modes.
++ sv_idleremove: Value in seconds, removes player from their team if they reach this amount of total idle time. Set to 0 to disable, Teamplay modes only.
 
 From 2.81
 * 3team mode: third team can not be locked forever anymore
@@ -109,7 +110,7 @@ From 2.81
 + Added 'tourney_lca' server cvar to enable "Lights Camera Action" at the beginning of the round rather than silence.  Set to 0 for classic use, 1 for LCA.
 * Missing action.ini file no longer kills the server, it will default to CTF team names and skins (blue/red/green).  The presence of action.ini will still take precedence
 + Ability to change team names and skins during teamplay with sv t[i]name, sv t[i]skin and sv t[i]skin_index where i is the team number.
-+ Added server cvar "sv_antilag" enables lag-compensation for aiming with hitscan weapons, useful for making high ping games more fair. (Default 0)
++ Added server cvar "sv_antilag" enables lag-compensation for aiming with hitscan weapons, useful for making high ping games more fair. (Default 1)
 + Added server cvar "sv_antilag_interp" accounts for interpolation with antilag, can cause players to be "shot around corners" even on low ping, but you can aim straight on the model. (Default 0)
 + Added server cvar "sv_limp_highping" players above this ping threshold will have movement prediction disabled with leg damage to make things less jittery. (Default 70)
 + Added userinfo Cvar "limp_nopred" clients can set this to force on or off movement prediction when taking leg damage. Legacy behavior would be "setu limp_nopred 0". (Default is decided by sv_limp_highping)

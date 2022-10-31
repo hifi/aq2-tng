@@ -369,6 +369,14 @@ Features
   Commands:
   ppl_idletime [#] - Allowed idle time in seconds before a client will start to make sounds. 0 to turn it off.
 
+* Anti Idle
+  To help with problem idlers, use this feature to remove them from their teams so that someone else can join in without 
+  needing to votekick (teamplay modes only, as regular DM does not use teams.  If you want to remove in DM move, use sv_idlekick)
+
+  Commands:
+  sv_idleremove [#] - Allow idle time in seconds before a player gets removed from their team.  Suggested this be a value over 60.
+  Set to 0 to disable.
+  
 * Gibs
   Gibs are a rewarding sight for successful headshots. TNG offers a variable which can turn gibs on headshots
   on. Also handcannon shots that do enough damage will gib someone.

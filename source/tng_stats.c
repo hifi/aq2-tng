@@ -487,3 +487,24 @@ void Cmd_Statmode_f(edict_t* ent)
 	}
 	stuffcmd(ent, stuff);
 }
+
+int Gamemodeflag(void)
+// These are gamemode flags that change the rules of gamemodes.
+// For example, you can have a darkmatch matchmode 3team teamplay server
+{
+	int gamemodeflag = 0;
+	char gmfstr[16];
+
+	if (use_3teams->value) {
+		gamemodeflag += GMF_3TEAMS;
+	}
+	if (darkmatch->value) {
+		gamemodeflag += GMF_DARKMATCH;
+	}
+	if (matchmode->value) {
+		gamemodeflag += GMF_MATCHMODE;
+	}
+	sprintf(gmfstr, "%d", gamemodeflag);
+	gi.cvar_forceset("gmf", gmfstr);
+	return gamemodeflag;
+}

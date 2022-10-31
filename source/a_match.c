@@ -304,7 +304,7 @@ void Cmd_Teamname_f(edict_t * ent)
 		strcpy( temp, "noname" );
 
 	gi.dprintf("%s (team %i) is now known as %s\n", team->name, teamNum, temp);
-	IRC_printf(IRC_T_GAME, "%n (team %i) is now known as %n", team->name, teamNum, temp);
+	IRC_printf(IRC_T_GAME, "%n (team %k) is now known as %n", team->name, teamNum, temp);
 	strcpy(team->name, temp);
 	gi.cprintf(ent, PRINT_HIGH, "New team name: %s\n", team->name);
 
