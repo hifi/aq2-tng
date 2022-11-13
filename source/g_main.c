@@ -474,6 +474,7 @@ cvar_t *mapvote_next_limit;
 cvar_t *sv_idleremove;
 cvar_t *gm;
 cvar_t *gmf;
+cvar_t *g_spawn_items;
 
 void SpawnEntities (char *mapname, char *entities, char *spawnpoint);
 void ClientThink (edict_t * ent, usercmd_t * cmd);

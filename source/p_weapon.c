@@ -2227,7 +2227,7 @@ void Pistol_Fire(edict_t* ent)
 
 	//      gi.cprintf(ent, PRINT_HIGH, "Spread is %d\n", spread);
 
-	if ((ent->client->mk23_rds == 1))
+	if (ent->client->mk23_rds == 1)
 	{
 		//Hard coded for reload only.
 		ent->client->ps.gunframe = 62;
