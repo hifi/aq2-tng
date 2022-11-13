@@ -605,7 +605,8 @@ Features
   limp_nopred [0/1] - client cvar, clients can set this to force on or off movement prediction when taking leg damage.
   Set to "0" for classic behavior, set to "1" to fix the jitter
 
-
+* Force Spawn items
+  g_spawn_items [0/1] - server cvar, set to "1" to allow for item/ammo/weapon spawns in games that you choose your starting weapon, for example, dm_choose, teamplay, etc.  Forced set to "0" for matchmode.  Set "0" for normal play.
 --------------------------------------------------------------------------------------------------------------------
 Contact Information
   If you wish to contact the TNG team, to report a bug, suggest a new feature, or offer JBravo your

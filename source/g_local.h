@@ -1143,6 +1143,7 @@ extern cvar_t *mapvote_next_limit; // Time left that disables map voting
 extern cvar_t *gm; // Gamemode
 extern cvar_t *gmf; // Gamemodeflags
 extern cvar_t *sv_idleremove; // Remove idlers
+extern cvar_t *g_spawn_items; // Enables item spawning in GS_WEAPONCHOOSE games
 
 #define world   (&g_edicts[0])
 
@@ -1397,7 +1398,7 @@ void ED_CallSpawn( edict_t *ent );
 char* ED_NewString(char* string);
 void G_UpdateSpectatorStatusbar( void );
 void G_UpdatePlayerStatusbar( edict_t *ent, int force );
-
+int Gamemodeflag(void);
 //
 // p_client.c
 //
