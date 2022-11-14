@@ -179,12 +179,14 @@ qboolean	CanMoveSafely(edict_t	*self, vec3_t angles)
 
 		// create a position a distance below it
 		VectorCopy( trace.endpos, dest2);
-		dest2[2] -= TRACE_DOWN;
+		dest2[2] -= TRACE_DOWN + max( lights_camera_action, self->client->uvTime ) * 32;
 		//BOTUT_TempLaser (trace.endpos, dest2);
 		trace = gi.trace(trace.endpos, VEC_ORIGIN, VEC_ORIGIN, dest2, self, MASK_PLAYERSOLID | MASK_DEADLY);
 
-		if( (trace.fraction == 1.0) // long drop!
-			|| (trace.contents & MASK_DEADLY) )	// avoid SLIME or LAVA
+		if( (trace.fraction == 1.0)                                // long drop!
+		||  (trace.contents & MASK_DEADLY)                         // avoid SLIME or LAVA
+		||  (trace.ent && (trace.ent->touch == hurt_touch))        // avoid MOD_TRIGGER_HURT
+		||  (trace.surface && (trace.surface->flags & SURF_SKY)) ) // avoid falling onto skybox
 		{
 			return (false);
 		}
@@ -230,7 +232,9 @@ qboolean ACEMV_CanMove(edict_t *self, int direction)
 	//AQ2 ADDED MASK_SOLID
 	tr = gi.trace(start, NULL, NULL, end, self, MASK_SOLID|MASK_OPAQUE);
 	
-	if(tr.fraction == 1.0 || tr.contents & (CONTENTS_LAVA|CONTENTS_SLIME))
+	if( ((tr.fraction == 1.0) && !((lights_camera_action || self->client->uvTime) && CanMoveSafely(self,angles))) // avoid falling after LCA
+	||  (tr.contents & MASK_DEADLY)                 // avoid SLIME or LAVA
+	||  (tr.ent && (tr.ent->touch == hurt_touch)) ) // avoid MOD_TRIGGER_HURT
 	{
 		if( self->last_door_time < level.framenum )
 		{
@@ -280,7 +284,9 @@ qboolean ACEMV_CanJumpInternal(edict_t *self, int direction)
 	//AQ2 ADDED MASK_SOLID
 	tr = gi.trace(start, NULL, NULL, end, self, MASK_SOLID|MASK_OPAQUE);
 	
-	if(tr.fraction == 1.0 || tr.contents & (CONTENTS_LAVA|CONTENTS_SLIME))
+	if( ((tr.fraction == 1.0) && !((lights_camera_action || self->client->uvTime) && CanMoveSafely(self,angles))) // avoid falling after LCA
+	||  (tr.contents & MASK_DEADLY)                 // avoid SLIME or LAVA
+	||  (tr.ent && (tr.ent->touch == hurt_touch)) ) // avoid MOD_TRIGGER_HURT
 	{
 		if( self->last_door_time < level.framenum )
 		{

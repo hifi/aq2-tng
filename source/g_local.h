@@ -1260,6 +1260,9 @@ char *vtos (vec3_t v);
 float vectoyaw (vec3_t vec);
 void vectoangles (vec3_t vec, vec3_t angles);
 
+// g_trigger.c
+void hurt_touch( edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf );
+
 //
 // g_combat.c
 //
