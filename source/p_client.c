@@ -3360,7 +3360,25 @@ void ClientBeginServerFrame(edict_t * ent)
 
 		if (client->uvTime && FRAMESYNC) {
 			client->uvTime--;
-			if (!client->uvTime)
+			if( jump->value )
+			{
+				if( client->uvTime == 42 )
+				{
+					gi.centerprintf( ent, "LIGHTS..." );
+					gi.sound( ent, CHAN_VOICE, gi.soundindex("atl/lights.wav"), 1.0, ATTN_STATIC, 0.0 );
+				}
+				else if( client->uvTime == 22 )
+				{
+					gi.centerprintf( ent, "CAMERA..." );
+					gi.sound( ent, CHAN_VOICE, gi.soundindex("atl/camera.wav"), 1.0, ATTN_STATIC, 0.0 );
+				}
+				else if( client->uvTime == 2 )
+				{
+					gi.centerprintf( ent, "ACTION!" );
+					gi.sound( ent, CHAN_VOICE, gi.soundindex("atl/action.wav"), 1.0, ATTN_STATIC, 0.0 );
+				}
+			}
+			else if (!client->uvTime)
 			{
 				if (team_round_going)
 				{

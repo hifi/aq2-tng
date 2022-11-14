@@ -13,3 +13,4 @@ void Cmd_Clear_f (edict_t *ent);
 void Cmd_Reset_f (edict_t *ent);
 void Cmd_Store_f (edict_t *ent);
 void Cmd_Recall_f (edict_t *ent);
+void Cmd_LCA_f (edict_t *ent);
