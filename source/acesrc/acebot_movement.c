@@ -672,6 +672,8 @@ void ACEMV_MoveToGoal(edict_t *self, usercmd_t *ucmd)
 								Cmd_OpenDoor_f ( self );	// Open the door
 								self->last_door_time = level.framenum + random() * 2.5 * HZ; // wait!
 								ucmd->forwardmove = 0;
+								VectorSubtract( self->movetarget->s.origin, self->s.origin, self->move_vector );
+								ACEMV_ChangeBotAngle( self );
 								return;
 							}
 						}
@@ -684,6 +686,58 @@ void ACEMV_MoveToGoal(edict_t *self, usercmd_t *ucmd)
 						if( ACEMV_CanMove( self, MOVE_BACK ) )
 							ucmd->forwardmove = -SPEED_WALK;
 						return;
+					}
+				}
+				else
+				{
+					// If trace from bot to next node hits rotating door, it should just strafe toward the path.
+					VectorCopy( self->s.origin, vStart );
+					VectorCopy( nodes[self->next_node].origin, vDest );
+					VectorSubtract( self->s.origin, nodes[self->next_node].origin, v );
+					if( VectorLength(v) < 32 )
+					{
+						PRETRACE();
+						tTrace = gi.trace( vStart, tv(-16,-16,-8), tv(16,16,8), vDest, self, MASK_PLAYERSOLID );
+						POSTTRACE();
+						if( (tTrace.fraction < 1.)
+						&&  (strcmp( tTrace.ent->classname, "func_door_rotating" ) == 0)
+						&&  (VectorLength(tTrace.ent->avelocity) > 0.) )
+						{
+							if( self->next_node != self->current_node )
+							{
+								// Decide if the bot should strafe to stay on course.
+								vec3_t dist = {0,0,0};
+								VectorSubtract( nodes[self->next_node].origin, nodes[self->current_node].origin, v );
+								v[2] = 0;
+								VectorSubtract( self->s.origin, nodes[self->next_node].origin, dist );
+								dist[2] = 0;
+								if( (DotProduct( v, dist ) > 0) && (VectorLength(v) > 16) )
+								{
+									float left = 0;
+									VectorNormalize( v );
+									VectorRotate2( v, 90 );
+									left = DotProduct( v, dist );
+									if( (left > 16) && (! self->groundentity || ACEMV_CanMove( self, MOVE_RIGHT )) )
+										ucmd->sidemove = SPEED_RUN;
+									else if( (left < -16) && (! self->groundentity || ACEMV_CanMove( self, MOVE_LEFT )) )
+										ucmd->sidemove = -SPEED_RUN;
+								}
+							}
+							else
+							{
+								ucmd->sidemove = 0;
+								if( (self->bot_strafe >= 0) && ACEMV_CanMove( self, MOVE_RIGHT ) )
+									ucmd->sidemove = SPEED_RUN;
+								else if( ACEMV_CanMove( self, MOVE_LEFT ) )
+									ucmd->sidemove = -SPEED_RUN;
+								self->bot_strafe = ucmd->sidemove;
+							}
+							if( ACEMV_CanMove( self, MOVE_BACK ) )
+								ucmd->forwardmove = -SPEED_RUN;
+							VectorSubtract( self->movetarget->s.origin, self->s.origin, self->move_vector );
+							ACEMV_ChangeBotAngle( self );
+							return;
+						}
 					}
 				}
 			}
@@ -871,6 +925,58 @@ void ACEMV_Move(edict_t *self, usercmd_t *ucmd)
 				else if( self->tries && self->groundentity )
 					ucmd->upmove = SPEED_RUN;
 				return;
+			}
+		}
+		else
+		{
+			// If trace from bot to next node hits rotating door, it should just strafe toward the path.
+			vec3_t v = {0,0,0};
+			VectorCopy( self->s.origin, vStart );
+			VectorCopy( nodes[self->next_node].origin, vDest );
+			VectorSubtract( self->s.origin, nodes[self->next_node].origin, v );
+			if( VectorLength(v) < 32 )
+			{
+				PRETRACE();
+				tTrace = gi.trace( vStart, tv(-16,-16,-8), tv(16,16,8), vDest, self, MASK_PLAYERSOLID );
+				POSTTRACE();
+				if( (tTrace.fraction < 1.)
+				&&  (strcmp( tTrace.ent->classname, "func_door_rotating" ) == 0)
+				&&  (VectorLength(tTrace.ent->avelocity) > 0.) )
+				{
+					if( self->next_node != self->current_node )
+					{
+						// Decide if the bot should strafe to stay on course.
+						VectorSubtract( nodes[self->next_node].origin, nodes[self->current_node].origin, v );
+						v[2] = 0;
+						VectorSubtract( self->s.origin, nodes[self->next_node].origin, dist );
+						dist[2] = 0;
+						if( (DotProduct( v, dist ) > 0) && (VectorLength(v) > 16) )
+						{
+							float left = 0;
+							VectorNormalize( v );
+							VectorRotate2( v, 90 );
+							left = DotProduct( v, dist );
+							if( (left > 16) && (! self->groundentity || ACEMV_CanMove( self, MOVE_RIGHT )) )
+								ucmd->sidemove = SPEED_RUN;
+							else if( (left < -16) && (! self->groundentity || ACEMV_CanMove( self, MOVE_LEFT )) )
+								ucmd->sidemove = -SPEED_RUN;
+						}
+					}
+					else
+					{
+						ucmd->sidemove = 0;
+						if( (self->bot_strafe >= 0) && ACEMV_CanMove( self, MOVE_RIGHT ) )
+							ucmd->sidemove = SPEED_RUN;
+						else if( ACEMV_CanMove( self, MOVE_LEFT ) )
+							ucmd->sidemove = -SPEED_RUN;
+						self->bot_strafe = ucmd->sidemove;
+					}
+					if( ACEMV_CanMove( self, MOVE_BACK ) )
+						ucmd->forwardmove = -SPEED_RUN;
+					VectorSubtract( self->movetarget->s.origin, self->s.origin, self->move_vector );
+					ACEMV_ChangeBotAngle( self );
+					return;
+				}
 			}
 		}
 	}
