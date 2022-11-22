@@ -1522,7 +1522,7 @@ void ACEMV_Attack (edict_t *self, usercmd_t *ucmd)
 		c = random();
 		if(c < 0.6 && ACEMV_CanMove(self,MOVE_FORWARD))
 			ucmd->forwardmove += SPEED_RUN;
-		else if(c < 0.8 && ACEMV_CanMove(self,MOVE_FORWARD))
+		else if(c < 0.8 && ACEMV_CanMove(self,MOVE_BACK))
 			ucmd->forwardmove -= SPEED_RUN;
 	}
 //AQ2 END
@@ -1535,7 +1535,7 @@ void ACEMV_Attack (edict_t *self, usercmd_t *ucmd)
 		// Randomly choose a vertical movement direction
 		c = random();
 
-		if(c < 0.10) //Werewolf: was 0.15
+		if( (c < 0.10) && FRAMESYNC ) //Werewolf: was 0.15
 		{
 			if (ACEMV_CanJump(self))
 				ucmd->upmove += SPEED_RUN;
