@@ -118,6 +118,14 @@ int _numclients (void)
 			continue;
 #endif
 
+		// Idle players do not count towards voting pool (unless they already voted).
+		if( sv_idleremove->value && ! (other->client->resp.mapvote || other->client->resp.cvote) )
+		{
+			int idleframes = other->client->resp.idletime ? (level.framenum - other->client->resp.idletime) : 0;
+			if( idleframes > sv_idleremove->value * HZ )
+				continue;
+		}
+
 		count++;
 	}
 	return count;
