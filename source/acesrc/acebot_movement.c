@@ -1668,9 +1668,10 @@ void ACEMV_Attack (edict_t *self, usercmd_t *ucmd)
 		else if( (self->react < 0.5f) && (dist > 300.f) )
 			iFactor ++;
 		
-		// Shoot less accurately at moving targets.
-		if( VectorLength(self->enemy->velocity) > 300.f )
-			iFactor ++;
+		// Shoot less accurately at moving and aerial targets.
+		iFactor += (int)( VectorLength(self->enemy->velocity) / 100.f );
+		if( ! self->enemy->groundentity )
+			iFactor += ((dist > 300.f) ? 20 : 19) / (ltk_skill->value + 1);
 		
 		target[0] += sign[0] * (10 - ltk_skill->value + ( (  iFactor*(10 - ltk_skill->value)  ) * random() )) * 0.7f;
 		target[1] += sign[1] * (10 - ltk_skill->value + ( (  iFactor*(10 - ltk_skill->value)  ) * random() )) * 0.7f;
