@@ -1654,8 +1654,8 @@ void ACEMV_Attack (edict_t *self, usercmd_t *ucmd)
 		sign[2] = (random() < 0.5) ? -1 : 1;
 
 		// Not that complex. We miss by 0 to 80 units based on skill value and random factor
-		// Unless we have a sniper rifle!
-		if(self->client->weapon == FindItem(SNIPER_NAME))
+		// Unless we have a sniper rifle (and are not mid-air)!
+		if( (self->client->weapon == FindItem(SNIPER_NAME)) && self->groundentity )
 			iFactor = 5;
 
 		// Shoot less accurately if we just got hit.
