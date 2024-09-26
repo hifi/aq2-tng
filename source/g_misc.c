@@ -1624,6 +1624,7 @@ teleporter_touch (edict_t * self, edict_t * other, cplane_t * plane,
   VectorClear (other->velocity);
   other->client->ps.pmove.pm_time = 160 >> 3;	// hold time
   other->client->ps.pmove.pm_flags |= PMF_TIME_TELEPORT;
+  other->react = 0.f;  // Disorient bots.
   }
 
   // draw the teleport splash at source and on the player
