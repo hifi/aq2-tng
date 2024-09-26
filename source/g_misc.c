@@ -1588,14 +1588,14 @@ SP_func_clock (edict_t * self)
 
 //=================================================================================
 
-void
+void  // FIXME: Clean up this function's formatting.
 teleporter_touch (edict_t * self, edict_t * other, cplane_t * plane,
 		  csurface_t * surf)
 {
   edict_t *dest;
   int i;
 
-  if (!other->client)
+  if( (!other->client) && ((! grenade_teleport->value) || (strcmp(other->classname,"hgrenade") != 0)) )
     return;
   dest = G_Find (NULL, FOFS (targetname), self->target);
   if (!dest)
@@ -1604,26 +1604,34 @@ teleporter_touch (edict_t * self, edict_t * other, cplane_t * plane,
       return;
     }
   
+  if( other->client )
+  {
   // let's be safe, if grapple was disabled but the player has it
   CTFPlayerResetGrapple(other);
 
   // unlink to make sure it can't possibly interfere with KillBox
   gi.unlinkentity (other);
+  }
 
   VectorCopy(dest->s.origin, other->s.origin);
   VectorCopy(dest->s.origin, other->s.old_origin);
   VectorCopy(dest->s.origin, other->old_origin);
   other->s.origin[2] += 10;
 
+  if( other->client )
+  {
   // clear the velocity and hold them in place briefly
   VectorClear (other->velocity);
   other->client->ps.pmove.pm_time = 160 >> 3;	// hold time
   other->client->ps.pmove.pm_flags |= PMF_TIME_TELEPORT;
+  }
 
   // draw the teleport splash at source and on the player
   self->owner->s.event = EV_PLAYER_TELEPORT;
   other->s.event = EV_PLAYER_TELEPORT;
 
+  if( other->client )
+  {
   // set angles
   for (i = 0; i < 3; i++)
     other->client->ps.pmove.delta_angles[i] =
@@ -1635,6 +1643,7 @@ teleporter_touch (edict_t * self, edict_t * other, cplane_t * plane,
 
   // kill anything at the destination
   KillBox (other);
+  }
 
   gi.linkentity (other);
 }
