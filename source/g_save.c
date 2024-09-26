@@ -503,6 +503,7 @@ void InitGame( void )
 	knifelimit = gi.cvar( "knifelimit", "40", 0 );
 	allweapon = gi.cvar( "allweapon", "0", 0 ); 	// Removed it from Serverinfo
 	allitem = gi.cvar( "allitem", "0", 0 ); 	// Removed it from Serverinfo
+	grenade_drop = gi.cvar( "grenade_drop", "1", 0 );
 	allow_hoarding = gi.cvar( "allow_hoarding", "0", CVAR_LATCH );
 	tgren = gi.cvar( "tgren", "0", CVAR_SERVERINFO );
 	//SLIC2

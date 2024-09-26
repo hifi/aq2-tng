@@ -1093,6 +1093,7 @@ extern cvar_t *tgren;
 extern cvar_t *allweapon;
 extern cvar_t *allitem;
 extern cvar_t *allow_hoarding; // Allow carrying multiple of the same special item or unique weapon.
+extern cvar_t *grenade_drop;
 
 extern cvar_t *stats_endmap; // If on (1), show the accuracy/etc stats at the end of a map
 extern cvar_t *stats_afterround; // TNG Stats, collect stats between rounds

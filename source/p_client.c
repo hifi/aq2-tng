@@ -1261,6 +1261,17 @@ void TossItemsOnDeath(edict_t * ent)
 	if (ent->client->inventory[ITEM_INDEX(item)] > 0) {
 		EjectItem(ent, item);
 	}
+
+	if( grenade_drop->value )
+	{
+		item = GET_ITEM(GRENADE_NUM);
+		int drop_count = ent->client->inventory[ ITEM_INDEX(item) ];
+		if( grenade_drop->value < drop_count )
+			drop_count = grenade_drop->value;
+		for( i = 0; i < drop_count; i ++ )
+			EjectItem( ent, item );
+	}
+
 // special items
 
 	if (!DMFLAGS(DF_QUAD_DROP))
