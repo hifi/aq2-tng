@@ -375,6 +375,7 @@ cvar_t *flashtime;*/
 cvar_t *allweapon;
 cvar_t *allitem;
 cvar_t *allow_hoarding;
+cvar_t *grenade_drop;
 cvar_t *sv_shelloff;
 cvar_t *shelllimit;
 cvar_t *shelllife;
