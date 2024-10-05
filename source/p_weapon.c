@@ -396,7 +396,9 @@ qboolean Pickup_Weapon(edict_t* ent, edict_t* other)
 		return false;
 
 	case GRENADE_NUM:
-		if (!(gameSettings & GS_DEATHMATCH) && ctf->value != 2 && !band)
+		// freud: Teamplay, cannot pick up grenades unless wearing bandolier.
+		// Raptor007: Not sure why, since teamplay already removes grenade spawns. Fixed for grenade_drop.
+		if (!(gameSettings & GS_DEATHMATCH) && (ctf->value != 2) && !band && !(grenade_drop->value))
 			return false;
 
 		if (other->client->inventory[index] >= other->client->grenade_max)
