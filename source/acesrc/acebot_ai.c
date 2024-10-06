@@ -680,6 +680,7 @@ qboolean ACEAI_FindEnemy(edict_t *self, int *total)
 	float		weight;
 	vec3_t		dist;
 	vec3_t		eyes;
+	qboolean 	loud;
 
 	VectorCopy( self->s.origin, eyes );
 	eyes[2] += self->viewheight;
@@ -697,13 +698,36 @@ qboolean ACEAI_FindEnemy(edict_t *self, int *total)
 	for(i=0;i<=num_players;i++)
 	{
 		if(players[i] == NULL || players[i] == self || 
-		   players[i]->solid == SOLID_NOT || (players[i]->flags & FL_NOTARGET) )
+		   players[i]->solid == SOLID_NOT || (players[i]->flags & FL_NOTARGET) ||
+		   (players[i]->deadflag != DEAD_NO) )
 		   continue;
 	
+		// Can we hear their weapon firing?
+		loud = false;
+		if( players[i]->client->weapon
+		&& ((players[i]->client->weaponstate == WEAPON_FIRING)
+		 || (players[i]->client->weaponstate == WEAPON_BURSTING)) )
+		{
+			switch( players[i]->client->weapon->typeNum )
+			{
+				case DUAL_NUM:
+				case M4_NUM:
+				case M3_NUM:
+				case HC_NUM:
+					loud = true;
+					break;
+				case KNIFE_NUM:
+				case GRENADE_NUM:
+					break;
+				default:
+					loud = !INV_AMMO( players[i], SIL_NUM );
+			}
+		}
+
 		// If it's dark and he's not already our enemy, ignore him
 		if( self->enemy && players[i] != self->enemy)
 		{
-			if( players[i]->light_level < 30)
+			if( (players[i]->light_level < 30) && ! loud )
 				continue;
 		}
 
@@ -715,12 +739,11 @@ qboolean ACEAI_FindEnemy(edict_t *self, int *total)
 		   continue;
 // AQ2 END
 
-		if((players[i]->deadflag == DEAD_NO) && ai_visible(self, players[i]) && 
-			gi.inPVS(eyes, players[i]->s.origin) )
+		if( ai_visible(self, players[i]) && gi.inPVS(eyes, players[i]->s.origin) )
 		{
 // RiEvEr
 			// Now we assess this enemy
-			qboolean visible = infront( self, players[i] );
+			qboolean visible = loud || infront( self, players[i] );
 			VectorSubtract(self->s.origin, players[i]->s.origin, dist);
 			weight = VectorLength( dist );
 
@@ -728,28 +751,6 @@ qboolean ACEAI_FindEnemy(edict_t *self, int *total)
 			{
 				// Can we hear their footsteps?
 				visible = (weight < 300) && !INV_AMMO( players[i], SLIP_NUM );
-			}
-
-			if( ! visible )
-			{
-				// Can we hear their weapon firing?
-				if( players[i]->client->weaponstate == WEAPON_FIRING || players[i]->client->weaponstate == WEAPON_BURSTING )
-				{
-					switch( players[i]->client->weapon->typeNum )
-					{
-						case DUAL_NUM:
-						case M4_NUM:
-						case M3_NUM:
-						case HC_NUM:
-							visible = true;
-							break;
-						case KNIFE_NUM:
-						case GRENADE_NUM:
-							break;
-						default:
-							visible = !INV_AMMO( players[i], SIL_NUM );
-					}
-				}
 			}
 
 			if( ! visible )
@@ -788,6 +789,9 @@ qboolean ACEAI_FindEnemy(edict_t *self, int *total)
 				}
 			}
 		}
+		// Select loud enemy if there are none visible and we are not recently hit.
+		else if( loud && (self->client->push_timeout <= 0) && ! bestenemy )
+			bestenemy = players[i];
 	}
 	// If we found a good enemy set it up
 	if( bestenemy)
