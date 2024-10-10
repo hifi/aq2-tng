@@ -188,7 +188,7 @@ void ACEAI_Think (edict_t *self)
 */
 
 	// React when enemies remain in sight, otherwise gradually forget.
-	self->react += see_enemies ? FRAMETIME : (FRAMETIME * -2.f);
+	self->react += FRAMETIME * (see_enemies ? (0.75f + numenemies * 0.25f) : -2.f);
 	if( (self->react > 6.f) || (ltk_skill->value > 10) )
 		self->react = 6.f;
 	else if( self->react < 0.f )
@@ -775,11 +775,14 @@ qboolean ACEAI_FindEnemy(edict_t *self, int *total)
 			// Can we see this enemy, or are they calling attention to themselves?
 			if( visible )
 			{
-				total+=1;
+				(*total) ++;
 
 				// If we can see the enemy flag carrier, always shoot at them.
 				if( INV_AMMO( players[i], FLAG_T1_NUM ) || INV_AMMO( players[i], FLAG_T2_NUM ) )
 					weight = 0;
+				// Slightly prioritize enemies currently shooting.
+				else if( loud )
+					weight *= 0.75f;
 
 				// See if it's better than what we have already
 				if (weight < bestweight)
