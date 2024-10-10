@@ -3354,6 +3354,7 @@ void ClientBeginServerFrame(edict_t * ent)
 	FrameStartZ( ent );
 
 	client = ent->client;
+	ent->s.event = 0;  // Bots use events to "hear" players.
 
 	if (sv_antilag->value) // if sv_antilag is enabled, we want to track our player position for later reference
 		antilag_update(ent);

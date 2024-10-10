@@ -680,7 +680,7 @@ qboolean ACEAI_FindEnemy(edict_t *self, int *total)
 	float		weight;
 	vec3_t		dist;
 	vec3_t		eyes;
-	qboolean 	loud;
+	qboolean 	loud, footstep;
 
 	VectorCopy( self->s.origin, eyes );
 	eyes[2] += self->viewheight;
@@ -739,19 +739,17 @@ qboolean ACEAI_FindEnemy(edict_t *self, int *total)
 		   continue;
 // AQ2 END
 
+		VectorSubtract( self->s.origin, players[i]->s.origin, dist );
+		weight = VectorLength( dist );
+
+		// Can we hear their footsteps?  (This should now correctly handle crouching/walking.)
+		footstep = players[i]->s.event && (weight < 300) && !INV_AMMO( players[i], SLIP_NUM );
+
 		if( ai_visible(self, players[i]) && gi.inPVS(eyes, players[i]->s.origin) )
 		{
 // RiEvEr
 			// Now we assess this enemy
-			qboolean visible = loud || infront( self, players[i] );
-			VectorSubtract(self->s.origin, players[i]->s.origin, dist);
-			weight = VectorLength( dist );
-
-			if( ! visible )
-			{
-				// Can we hear their footsteps?
-				visible = (weight < 300) && !INV_AMMO( players[i], SLIP_NUM );
-			}
+			qboolean visible = loud || footstep || infront( self, players[i] );
 
 			if( ! visible )
 			{
@@ -762,6 +760,8 @@ qboolean ACEAI_FindEnemy(edict_t *self, int *total)
 				{
 					VectorSubtract( self->s.origin, fl->s.origin, dist );
 					visible = (VectorLength(dist) < 100);
+					if( visible )
+						weight *= 2.;  // Light from behind is less important than enemy ahead.
 				}
 			}
 
@@ -770,6 +770,8 @@ qboolean ACEAI_FindEnemy(edict_t *self, int *total)
 				// Can we see their laser sight?
 				edict_t *laser = players[i]->client->lasersight;
 				visible = laser && (laser->s.modelindex != level.model_null) && infront( self, laser ) && ai_visible( self, laser );
+				if( visible )
+					weight *= 2.;  // Laser from behind is less important than enemy ahead.
 			}
 
 			// Can we see this enemy, or are they calling attention to themselves?
