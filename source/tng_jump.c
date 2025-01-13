@@ -92,6 +92,7 @@ void Cmd_Jmod_f (edict_t *ent)
 		gi.cprintf(ent, PRINT_HIGH, " jmod recall - teleport back to saved point\n");
 		gi.cprintf(ent, PRINT_HIGH, " jmod reset - remove saved point\n");
 		gi.cprintf(ent, PRINT_HIGH, " jmod clear - reset stats\n");
+		gi.cprintf(ent, PRINT_HIGH, " jmod lca - lights camera action\n");
 		return;
 	}
 
@@ -115,6 +116,11 @@ void Cmd_Jmod_f (edict_t *ent)
 	else if(Q_stricmp(cmd, "clear") == 0)
 	{
 		Cmd_Clear_f(ent);
+		return;
+	}
+	else if(Q_stricmp(cmd, "lca") == 0)
+	{
+		Cmd_LCA_f(ent);
 		return;
 	}
 
@@ -218,4 +224,12 @@ void Cmd_Recall_f (edict_t *ent)
 	gi.multicast (ent->s.origin, MULTICAST_PVS);
 
 	ent->movetype = MOVETYPE_WALK;
+}
+
+void Cmd_LCA_f (edict_t *ent)
+{
+	if( IS_ALIVE(ent) && ! ent->client->pers.spectator )
+		ent->client->uvTime = 43;
+	else
+		gi.cprintf( ent, PRINT_HIGH, "This command cannot be used by spectators or dead players\n" );
 }
