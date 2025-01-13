@@ -375,6 +375,8 @@ cvar_t *flashtime;*/
 cvar_t *allweapon;
 cvar_t *allitem;
 cvar_t *allow_hoarding;
+cvar_t *grenade_drop;
+cvar_t *grenade_teleport;
 cvar_t *sv_shelloff;
 cvar_t *shelllimit;
 cvar_t *shelllife;
@@ -484,6 +486,7 @@ cvar_t *mapvote_next_limit;
 cvar_t *sv_idleremove;
 cvar_t *gm;
 cvar_t *gmf;
+cvar_t *g_spawn_items;
 
 void SpawnEntities (char *mapname, char *entities, char *spawnpoint);
 void ClientThink (edict_t * ent, usercmd_t * cmd);

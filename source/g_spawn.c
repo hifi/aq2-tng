@@ -393,9 +393,15 @@ void ED_CallSpawn (edict_t * ent)
 		{	// found it
 
 			//FIXME: We do same checks in SpawnItem, do we need these here? -M
-			if (gameSettings & GS_DEATHMATCH)
+			if ((gameSettings & GS_TEAMPLAY) && g_spawn_items->value && !matchmode->value) // Force spawn ammo/items/weapons for teamplay non-matchmode
 			{
-				if (gameSettings & GS_WEAPONCHOOSE)
+				SpawnItem(ent, item);
+			}
+			else if (gameSettings & GS_DEATHMATCH)
+			{
+				if ((gameSettings & GS_WEAPONCHOOSE) && g_spawn_items->value) // Force spawn ammo/items/weapons for DM modes
+					SpawnItem(ent, item);
+				else if (gameSettings & GS_WEAPONCHOOSE) // Traditional teamplay / dm_choose 1 mode
 					G_FreeEdict( ent );
 				else if (item->flags & (IT_AMMO|IT_WEAPON))
 					SpawnItem(ent, item);
@@ -843,6 +849,27 @@ void G_LoadLocations( void )
 	gi.dprintf( "Found %d locations.\n", ml_count );
 }
 
+// These are gamemode flags that change the rules of gamemodes.
+// For example, you can have a darkmatch matchmode 3team teamplay server
+int Gamemodeflag(void)
+{
+	int gamemodeflag = 0;
+	char gmfstr[16];
+
+	if (use_3teams->value) {
+		gamemodeflag += GMF_3TEAMS;
+	}
+	if (darkmatch->value) {
+		gamemodeflag += GMF_DARKMATCH;
+	}
+	if (matchmode->value) {
+		gamemodeflag += GMF_MATCHMODE;
+	}
+	sprintf(gmfstr, "%d", gamemodeflag);
+	gi.cvar_forceset("gmf", gmfstr);
+	return gamemodeflag;
+}
+
 /*
 ==============
 SpawnEntities
@@ -1009,6 +1036,7 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	}
 	else if (use_3teams->value)
 	{
+		gi.cvar_forceset(gm->name, "tp");
 		gameSettings |= (GS_ROUNDBASED | GS_WEAPONCHOOSE);
 		if (!teamplay->value)
 		{
@@ -1024,6 +1052,8 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	else if (matchmode->value)
 	{
 		gameSettings |= (GS_ROUNDBASED | GS_WEAPONCHOOSE);
+		gi.dprintf ("Matchmode Enabled - Forcing g_spawn_items off\n");
+		gi.cvar_forceset(g_spawn_items->name, "0"); // Turn off spawning of items for matchmode games
 		if (!teamplay->value)
 		{
 			gi.dprintf ("Matchmode Enabled - Forcing teamplay on\n");

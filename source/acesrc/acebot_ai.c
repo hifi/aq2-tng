@@ -188,7 +188,7 @@ void ACEAI_Think (edict_t *self)
 */
 
 	// React when enemies remain in sight, otherwise gradually forget.
-	self->react += see_enemies ? FRAMETIME : (FRAMETIME * -2.f);
+	self->react += FRAMETIME * (see_enemies ? (0.75f + numenemies * 0.25f) : -2.f);
 	if( (self->react > 6.f) || (ltk_skill->value > 10) )
 		self->react = 6.f;
 	else if( self->react < 0.f )
@@ -680,6 +680,7 @@ qboolean ACEAI_FindEnemy(edict_t *self, int *total)
 	float		weight;
 	vec3_t		dist;
 	vec3_t		eyes;
+	qboolean 	loud, footstep;
 
 	VectorCopy( self->s.origin, eyes );
 	eyes[2] += self->viewheight;
@@ -697,13 +698,36 @@ qboolean ACEAI_FindEnemy(edict_t *self, int *total)
 	for(i=0;i<=num_players;i++)
 	{
 		if(players[i] == NULL || players[i] == self || 
-		   players[i]->solid == SOLID_NOT || (players[i]->flags & FL_NOTARGET) )
+		   players[i]->solid == SOLID_NOT || (players[i]->flags & FL_NOTARGET) ||
+		   (players[i]->deadflag != DEAD_NO) )
 		   continue;
 	
+		// Can we hear their weapon firing?
+		loud = false;
+		if( players[i]->client->weapon
+		&& ((players[i]->client->weaponstate == WEAPON_FIRING)
+		 || (players[i]->client->weaponstate == WEAPON_BURSTING)) )
+		{
+			switch( players[i]->client->weapon->typeNum )
+			{
+				case DUAL_NUM:
+				case M4_NUM:
+				case M3_NUM:
+				case HC_NUM:
+					loud = true;
+					break;
+				case KNIFE_NUM:
+				case GRENADE_NUM:
+					break;
+				default:
+					loud = !INV_AMMO( players[i], SIL_NUM );
+			}
+		}
+
 		// If it's dark and he's not already our enemy, ignore him
 		if( self->enemy && players[i] != self->enemy)
 		{
-			if( players[i]->light_level < 30)
+			if( (players[i]->light_level < 30) && ! loud )
 				continue;
 		}
 
@@ -715,42 +739,17 @@ qboolean ACEAI_FindEnemy(edict_t *self, int *total)
 		   continue;
 // AQ2 END
 
-		if((players[i]->deadflag == DEAD_NO) && ai_visible(self, players[i]) && 
-			gi.inPVS(eyes, players[i]->s.origin) )
+		VectorSubtract( self->s.origin, players[i]->s.origin, dist );
+		weight = VectorLength( dist );
+
+		// Can we hear their footsteps?  (This should now correctly handle crouching/walking.)
+		footstep = players[i]->s.event && (weight < 300) && !INV_AMMO( players[i], SLIP_NUM );
+
+		if( ai_visible(self, players[i]) && gi.inPVS(eyes, players[i]->s.origin) )
 		{
 // RiEvEr
 			// Now we assess this enemy
-			qboolean visible = infront( self, players[i] );
-			VectorSubtract(self->s.origin, players[i]->s.origin, dist);
-			weight = VectorLength( dist );
-
-			if( ! visible )
-			{
-				// Can we hear their footsteps?
-				visible = (weight < 300) && !INV_AMMO( players[i], SLIP_NUM );
-			}
-
-			if( ! visible )
-			{
-				// Can we hear their weapon firing?
-				if( players[i]->client->weaponstate == WEAPON_FIRING || players[i]->client->weaponstate == WEAPON_BURSTING )
-				{
-					switch( players[i]->client->weapon->typeNum )
-					{
-						case DUAL_NUM:
-						case M4_NUM:
-						case M3_NUM:
-						case HC_NUM:
-							visible = true;
-							break;
-						case KNIFE_NUM:
-						case GRENADE_NUM:
-							break;
-						default:
-							visible = !INV_AMMO( players[i], SIL_NUM );
-					}
-				}
-			}
+			qboolean visible = loud || footstep || infront( self, players[i] );
 
 			if( ! visible )
 			{
@@ -761,6 +760,8 @@ qboolean ACEAI_FindEnemy(edict_t *self, int *total)
 				{
 					VectorSubtract( self->s.origin, fl->s.origin, dist );
 					visible = (VectorLength(dist) < 100);
+					if( visible )
+						weight *= 2.;  // Light from behind is less important than enemy ahead.
 				}
 			}
 
@@ -769,16 +770,21 @@ qboolean ACEAI_FindEnemy(edict_t *self, int *total)
 				// Can we see their laser sight?
 				edict_t *laser = players[i]->client->lasersight;
 				visible = laser && (laser->s.modelindex != level.model_null) && infront( self, laser ) && ai_visible( self, laser );
+				if( visible )
+					weight *= 2.;  // Laser from behind is less important than enemy ahead.
 			}
 
 			// Can we see this enemy, or are they calling attention to themselves?
 			if( visible )
 			{
-				total+=1;
+				(*total) ++;
 
 				// If we can see the enemy flag carrier, always shoot at them.
 				if( INV_AMMO( players[i], FLAG_T1_NUM ) || INV_AMMO( players[i], FLAG_T2_NUM ) )
 					weight = 0;
+				// Slightly prioritize enemies currently shooting.
+				else if( loud )
+					weight *= 0.75f;
 
 				// See if it's better than what we have already
 				if (weight < bestweight)
@@ -788,6 +794,9 @@ qboolean ACEAI_FindEnemy(edict_t *self, int *total)
 				}
 			}
 		}
+		// Select loud enemy if there are none visible and we are not recently hit.
+		else if( loud && (self->client->push_timeout <= 0) && ! bestenemy )
+			bestenemy = players[i];
 	}
 	// If we found a good enemy set it up
 	if( bestenemy)

@@ -8,6 +8,7 @@ From 2.82
 + mapvote_next_limit: Value in seconds, restricts players from voting for a map at the very end of the match while still enabling mapvote_next features
 + New server cvar 'scoreboard' allows customizing fields of second scoreboard screen in team modes.
 + sv_idleremove: Value in seconds, removes player from their team if they reach this amount of total idle time. Set to 0 to disable, Teamplay modes only.
++ g_spawn_items: Value [0/1], set to 1 to allow for item/ammo/weapon spawns in games that you choose your starting weapon.  Set 0 for normal play.
 
 From 2.81
 * 3team mode: third team can not be locked forever anymore
@@ -100,7 +101,7 @@ From 2.81
 + Added 'sv_fps' support for servers that implement variable framerate.  Multiple of 10; higher values reduce lag.  Default value (10) retains old behavior.
 - Climbing down ladders no longer makes a footstep sound every server frame (it sounded awful at higher sv_fps).
 + Added 'sync_guns' for sound timing with sv_fps: 0 plays shots immediately, 1 (default) syncs when multiple are firing, 2 delays all shot sounds to 10fps.
-+ Added 'loud_guns' to make non-silenced shots heard from farther away.  Default 1 is on, set to 0 for classic sound attenuation.
++ Added 'loud_guns' to make non-silenced shots heard from farther away.  Default 0 is off (classic).
 + New domination game mode (set 'dom 1') where teams claim flags by touching them and gain points for maintaining control.
 + Can combine use_3team with teamdm or dom mode.
 - When not using maplist.ini, votes are now saved as action.ini-votes instead of maplist.ini-votes.  This fixes vote storage with 'ininame' cvar.

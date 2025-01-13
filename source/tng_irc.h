@@ -13,9 +13,9 @@
 //
 //-----------------------------------------------------------------------------
 
-#define IRC_SERVER  	"irc.barrysworld.com"
+#define IRC_SERVER  	"irc.aq2world.com"
 #define IRC_PORT    	"6667"
-#define IRC_CHANNEL 	""
+#define IRC_CHANNEL 	"#servermsg"
 #define IRC_CHMODE  	"nt"
 #define IRC_USER    	"TNG-Bot"
 #define IRC_PASSWD  	""

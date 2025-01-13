@@ -179,12 +179,14 @@ qboolean	CanMoveSafely(edict_t	*self, vec3_t angles)
 
 		// create a position a distance below it
 		VectorCopy( trace.endpos, dest2);
-		dest2[2] -= TRACE_DOWN;
+		dest2[2] -= TRACE_DOWN + max( lights_camera_action, self->client->uvTime ) * 32;
 		//BOTUT_TempLaser (trace.endpos, dest2);
 		trace = gi.trace(trace.endpos, VEC_ORIGIN, VEC_ORIGIN, dest2, self, MASK_PLAYERSOLID | MASK_DEADLY);
 
-		if( (trace.fraction == 1.0) // long drop!
-			|| (trace.contents & MASK_DEADLY) )	// avoid SLIME or LAVA
+		if( (trace.fraction == 1.0)                                // long drop!
+		||  (trace.contents & MASK_DEADLY)                         // avoid SLIME or LAVA
+		||  (trace.ent && (trace.ent->touch == hurt_touch))        // avoid MOD_TRIGGER_HURT
+		||  (trace.surface && (trace.surface->flags & SURF_SKY)) ) // avoid falling onto skybox
 		{
 			return (false);
 		}
@@ -230,7 +232,9 @@ qboolean ACEMV_CanMove(edict_t *self, int direction)
 	//AQ2 ADDED MASK_SOLID
 	tr = gi.trace(start, NULL, NULL, end, self, MASK_SOLID|MASK_OPAQUE);
 	
-	if(tr.fraction == 1.0 || tr.contents & (CONTENTS_LAVA|CONTENTS_SLIME))
+	if( ((tr.fraction == 1.0) && !((lights_camera_action || self->client->uvTime) && CanMoveSafely(self,angles))) // avoid falling after LCA
+	||  (tr.contents & MASK_DEADLY)                 // avoid SLIME or LAVA
+	||  (tr.ent && (tr.ent->touch == hurt_touch)) ) // avoid MOD_TRIGGER_HURT
 	{
 		if( self->last_door_time < level.framenum )
 		{
@@ -280,7 +284,9 @@ qboolean ACEMV_CanJumpInternal(edict_t *self, int direction)
 	//AQ2 ADDED MASK_SOLID
 	tr = gi.trace(start, NULL, NULL, end, self, MASK_SOLID|MASK_OPAQUE);
 	
-	if(tr.fraction == 1.0 || tr.contents & (CONTENTS_LAVA|CONTENTS_SLIME))
+	if( ((tr.fraction == 1.0) && !((lights_camera_action || self->client->uvTime) && CanMoveSafely(self,angles))) // avoid falling after LCA
+	||  (tr.contents & MASK_DEADLY)                 // avoid SLIME or LAVA
+	||  (tr.ent && (tr.ent->touch == hurt_touch)) ) // avoid MOD_TRIGGER_HURT
 	{
 		if( self->last_door_time < level.framenum )
 		{
@@ -666,6 +672,8 @@ void ACEMV_MoveToGoal(edict_t *self, usercmd_t *ucmd)
 								Cmd_OpenDoor_f ( self );	// Open the door
 								self->last_door_time = level.framenum + random() * 2.5 * HZ; // wait!
 								ucmd->forwardmove = 0;
+								VectorSubtract( self->movetarget->s.origin, self->s.origin, self->move_vector );
+								ACEMV_ChangeBotAngle( self );
 								return;
 							}
 						}
@@ -678,6 +686,58 @@ void ACEMV_MoveToGoal(edict_t *self, usercmd_t *ucmd)
 						if( ACEMV_CanMove( self, MOVE_BACK ) )
 							ucmd->forwardmove = -SPEED_WALK;
 						return;
+					}
+				}
+				else
+				{
+					// If trace from bot to next node hits rotating door, it should just strafe toward the path.
+					VectorCopy( self->s.origin, vStart );
+					VectorCopy( nodes[self->next_node].origin, vDest );
+					VectorSubtract( self->s.origin, nodes[self->next_node].origin, v );
+					if( VectorLength(v) < 32 )
+					{
+						PRETRACE();
+						tTrace = gi.trace( vStart, tv(-16,-16,-8), tv(16,16,8), vDest, self, MASK_PLAYERSOLID );
+						POSTTRACE();
+						if( (tTrace.fraction < 1.)
+						&&  (strcmp( tTrace.ent->classname, "func_door_rotating" ) == 0)
+						&&  (VectorLength(tTrace.ent->avelocity) > 0.) )
+						{
+							if( self->next_node != self->current_node )
+							{
+								// Decide if the bot should strafe to stay on course.
+								vec3_t dist = {0,0,0};
+								VectorSubtract( nodes[self->next_node].origin, nodes[self->current_node].origin, v );
+								v[2] = 0;
+								VectorSubtract( self->s.origin, nodes[self->next_node].origin, dist );
+								dist[2] = 0;
+								if( (DotProduct( v, dist ) > 0) && (VectorLength(v) > 16) )
+								{
+									float left = 0;
+									VectorNormalize( v );
+									VectorRotate2( v, 90 );
+									left = DotProduct( v, dist );
+									if( (left > 16) && (! self->groundentity || ACEMV_CanMove( self, MOVE_RIGHT )) )
+										ucmd->sidemove = SPEED_RUN;
+									else if( (left < -16) && (! self->groundentity || ACEMV_CanMove( self, MOVE_LEFT )) )
+										ucmd->sidemove = -SPEED_RUN;
+								}
+							}
+							else
+							{
+								ucmd->sidemove = 0;
+								if( (self->bot_strafe >= 0) && ACEMV_CanMove( self, MOVE_RIGHT ) )
+									ucmd->sidemove = SPEED_RUN;
+								else if( ACEMV_CanMove( self, MOVE_LEFT ) )
+									ucmd->sidemove = -SPEED_RUN;
+								self->bot_strafe = ucmd->sidemove;
+							}
+							if( ACEMV_CanMove( self, MOVE_BACK ) )
+								ucmd->forwardmove = -SPEED_RUN;
+							VectorSubtract( self->movetarget->s.origin, self->s.origin, self->move_vector );
+							ACEMV_ChangeBotAngle( self );
+							return;
+						}
 					}
 				}
 			}
@@ -865,6 +925,58 @@ void ACEMV_Move(edict_t *self, usercmd_t *ucmd)
 				else if( self->tries && self->groundentity )
 					ucmd->upmove = SPEED_RUN;
 				return;
+			}
+		}
+		else
+		{
+			// If trace from bot to next node hits rotating door, it should just strafe toward the path.
+			vec3_t v = {0,0,0};
+			VectorCopy( self->s.origin, vStart );
+			VectorCopy( nodes[self->next_node].origin, vDest );
+			VectorSubtract( self->s.origin, nodes[self->next_node].origin, v );
+			if( VectorLength(v) < 32 )
+			{
+				PRETRACE();
+				tTrace = gi.trace( vStart, tv(-16,-16,-8), tv(16,16,8), vDest, self, MASK_PLAYERSOLID );
+				POSTTRACE();
+				if( (tTrace.fraction < 1.)
+				&&  (strcmp( tTrace.ent->classname, "func_door_rotating" ) == 0)
+				&&  (VectorLength(tTrace.ent->avelocity) > 0.) )
+				{
+					if( self->next_node != self->current_node )
+					{
+						// Decide if the bot should strafe to stay on course.
+						VectorSubtract( nodes[self->next_node].origin, nodes[self->current_node].origin, v );
+						v[2] = 0;
+						VectorSubtract( self->s.origin, nodes[self->next_node].origin, dist );
+						dist[2] = 0;
+						if( (DotProduct( v, dist ) > 0) && (VectorLength(v) > 16) )
+						{
+							float left = 0;
+							VectorNormalize( v );
+							VectorRotate2( v, 90 );
+							left = DotProduct( v, dist );
+							if( (left > 16) && (! self->groundentity || ACEMV_CanMove( self, MOVE_RIGHT )) )
+								ucmd->sidemove = SPEED_RUN;
+							else if( (left < -16) && (! self->groundentity || ACEMV_CanMove( self, MOVE_LEFT )) )
+								ucmd->sidemove = -SPEED_RUN;
+						}
+					}
+					else
+					{
+						ucmd->sidemove = 0;
+						if( (self->bot_strafe >= 0) && ACEMV_CanMove( self, MOVE_RIGHT ) )
+							ucmd->sidemove = SPEED_RUN;
+						else if( ACEMV_CanMove( self, MOVE_LEFT ) )
+							ucmd->sidemove = -SPEED_RUN;
+						self->bot_strafe = ucmd->sidemove;
+					}
+					if( ACEMV_CanMove( self, MOVE_BACK ) )
+						ucmd->forwardmove = -SPEED_RUN;
+					VectorSubtract( self->movetarget->s.origin, self->s.origin, self->move_vector );
+					ACEMV_ChangeBotAngle( self );
+					return;
+				}
 			}
 		}
 	}
@@ -1410,7 +1522,7 @@ void ACEMV_Attack (edict_t *self, usercmd_t *ucmd)
 		c = random();
 		if(c < 0.6 && ACEMV_CanMove(self,MOVE_FORWARD))
 			ucmd->forwardmove += SPEED_RUN;
-		else if(c < 0.8 && ACEMV_CanMove(self,MOVE_FORWARD))
+		else if(c < 0.8 && ACEMV_CanMove(self,MOVE_BACK))
 			ucmd->forwardmove -= SPEED_RUN;
 	}
 //AQ2 END
@@ -1423,7 +1535,7 @@ void ACEMV_Attack (edict_t *self, usercmd_t *ucmd)
 		// Randomly choose a vertical movement direction
 		c = random();
 
-		if(c < 0.10) //Werewolf: was 0.15
+		if( (c < 0.10) && FRAMESYNC ) //Werewolf: was 0.15
 		{
 			if (ACEMV_CanJump(self))
 				ucmd->upmove += SPEED_RUN;
@@ -1542,8 +1654,8 @@ void ACEMV_Attack (edict_t *self, usercmd_t *ucmd)
 		sign[2] = (random() < 0.5) ? -1 : 1;
 
 		// Not that complex. We miss by 0 to 80 units based on skill value and random factor
-		// Unless we have a sniper rifle!
-		if(self->client->weapon == FindItem(SNIPER_NAME))
+		// Unless we have a sniper rifle (and are not mid-air)!
+		if( (self->client->weapon == FindItem(SNIPER_NAME)) && self->groundentity )
 			iFactor = 5;
 
 		// Shoot less accurately if we just got hit.
@@ -1555,7 +1667,12 @@ void ACEMV_Attack (edict_t *self, usercmd_t *ucmd)
 			iFactor --;
 		else if( (self->react < 0.5f) && (dist > 300.f) )
 			iFactor ++;
-
+		
+		// Shoot less accurately at moving and aerial targets.
+		iFactor += (int)( VectorLength(self->enemy->velocity) / 100.f );
+		if( ! self->enemy->groundentity )
+			iFactor += ((dist > 300.f) ? 20 : 19) / (ltk_skill->value + 1);
+		
 		target[0] += sign[0] * (10 - ltk_skill->value + ( (  iFactor*(10 - ltk_skill->value)  ) * random() )) * 0.7f;
 		target[1] += sign[1] * (10 - ltk_skill->value + ( (  iFactor*(10 - ltk_skill->value)  ) * random() )) * 0.7f;
 		target[2] += sign[2] * (10 - ltk_skill->value + ( (  iFactor*(10 - ltk_skill->value)  ) * random() ));

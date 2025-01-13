@@ -427,7 +427,7 @@ void InitGame( void )
 	empty_rotate = gi.cvar( "empty_rotate", "0", 0 );
 	empty_exec = gi.cvar( "empty_exec", "", 0 );
 	llsound = gi.cvar( "llsound", "0", 0 );
-	loud_guns = gi.cvar( "loud_guns", "1", 0 );
+	loud_guns = gi.cvar( "loud_guns", "0", 0 );
 	sync_guns = gi.cvar( "sync_guns", "1", 0 );
 	silentwalk = gi.cvar( "silentwalk", "0", 0 );
 	slopefix = gi.cvar( "slopefix", "1", 0 );
@@ -503,6 +503,8 @@ void InitGame( void )
 	knifelimit = gi.cvar( "knifelimit", "40", 0 );
 	allweapon = gi.cvar( "allweapon", "0", 0 ); 	// Removed it from Serverinfo
 	allitem = gi.cvar( "allitem", "0", 0 ); 	// Removed it from Serverinfo
+	grenade_drop = gi.cvar( "grenade_drop", "1", 0 );
+	grenade_teleport = gi.cvar( "grenade_teleport", "1", 0 ); // Allow grenades to use teleporters.
 	allow_hoarding = gi.cvar( "allow_hoarding", "0", CVAR_LATCH );
 	tgren = gi.cvar( "tgren", "0", CVAR_SERVERINFO );
 	//SLIC2
@@ -555,11 +557,12 @@ void InitGame( void )
 	gm = gi.cvar("gm", "dm", CVAR_SERVERINFO);
 	gmf = gi.cvar("gmf", "0", CVAR_SERVERINFO);
 	sv_idleremove = gi.cvar("sv_idleremove", "0", 0);
+	g_spawn_items = gi.cvar("g_spawn_items", "0", CVAR_LATCH);
 
 #ifndef NO_BOTS
 	// bots
 	ltk_jumpy = gi.cvar( "ltk_jumpy", "1", 0 );
-	ltk_skill = gi.cvar( "ltk_skill", "5", 0 );
+	ltk_skill = gi.cvar( "ltk_skill", "3", 0 );
 	ltk_showpath = gi.cvar( "ltk_showpath", "0", 0 );
 	ltk_chat = gi.cvar( "ltk_chat", "1", 0 );
 	ltk_routing = gi.cvar( "ltk_routing", "0", 0 );
